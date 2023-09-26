@@ -1,10 +1,10 @@
-// src/app/store.js
-
 import { configureStore } from "@reduxjs/toolkit";
-import todosReducer from "./todosSlice";
+import postReducer from "./todosSlice";
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
-    todos: todosReducer,
+    posts: postReducer,
   },
 });
+
+export default store;

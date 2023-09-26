@@ -1,98 +1,110 @@
-// src/features/todos/todosSlice.js
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { postToJSONPlaceholder } from "../api";
 
-// Define an initial state for the todos
 const initialState = {
-  todos: [],
+  posts: [],
   status: "idle",
   error: null,
   filteredTodos: [],
 };
 
-// Define an async thunk to fetch todos from the API
-export const fetchTodos = createAsyncThunk("todos/fetchTodos", async () => {
+export const fetchPosts = createAsyncThunk("posts/fetchPosts", async () => {
   const response = await axios.get(
-    // "https://jsonplaceholder.typicode.com/todos"
-    "http://46.100.46.149:8069/api/tasks"
-  );
-  // const response = await axios.get("http://178.252.143.198:8069/api/tasks");
-
-  return response.data;
-});
-
-export const addTodo = createAsyncThunk("todos/addTodo", async (newTodo) => {
-  const response = await axios.post(
-    "https://jsonplaceholder.typicode.com/todos",
-    newTodo
+    "https://jsonplaceholder.typicode.com/posts"
   );
   return response.data;
 });
 
-export const updateTodo = createAsyncThunk(
-  "todos/updateTodo",
-  async (updatedTodo) => {
-    const response = await axios.put(
-      `https://jsonplaceholder.typicode.com/todos/${updatedTodo.id}`,
-      updatedTodo
+export const createPost = createAsyncThunk(
+  "posts/createPost",
+  async (newPost) => {
+    const response = await axios.post(
+      "https://jsonplaceholder.typicode.com/posts",
+      newPost
     );
     return response.data;
   }
 );
 
-export const deleteTodo = createAsyncThunk(
-  "todos/deleteTodo",
-  async (todoId) => {
-    await axios.delete(`https://jsonplaceholder.typicode.com/todos/${todoId}`);
-    return todoId;
+export const postNewData = createAsyncThunk(
+  "posts/postNewData",
+  async (data) => {
+    return postToJSONPlaceholder(data);
   }
 );
-// Create a todos slice
-const todosSlice = createSlice({
-  name: "todos",
+
+export const updatePost = createAsyncThunk(
+  "posts/updatePost",
+  async ({ id, updatedPost }) => {
+    const response = await axios.put(
+      `https://jsonplaceholder.typicode.com/posts/${id}`,
+      updatedPost
+    );
+    return response.data;
+  }
+);
+
+export const deletePost = createAsyncThunk("posts/deletePost", async (id) => {
+  await axios.delete(`https://jsonplaceholder.typicode.com/posts/${id}`);
+  return id;
+});
+
+const postSlice = createSlice({
+  name: "posts",
   initialState,
   reducers: {
     // Define a reducer to filter todos based on a keyword
     filterTodos: (state, action) => {
       const keyword = action.payload.toLowerCase();
-      state.filteredTodos = state.todos.filter((todo) =>
+      state.filteredTodos = state.posts.filter((todo) =>
         todo.title.toLowerCase().includes(keyword)
       );
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTodos.pending, (state) => {
+      .addCase(fetchPosts.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(fetchTodos.fulfilled, (state, action) => {
+      .addCase(fetchPosts.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.todos = action.payload;
+        state.posts = action.payload;
         state.filteredTodos = action.payload;
       })
-      .addCase(fetchTodos.rejected, (state, action) => {
+      .addCase(fetchPosts.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message;
       })
+      // post
 
-      .addCase(addTodo.fulfilled, (state, action) => {
-        state.list.push(action.payload);
+      .addCase(postNewData.pending, (state) => {
+        state.status = "loading";
       })
-      .addCase(updateTodo.fulfilled, (state, action) => {
-        const updatedIndex = state.list.findIndex(
-          (todo) => todo.id === action.payload.id
+      .addCase(postNewData.fulfilled, (state) => {
+        state.status = "succeeded";
+      })
+      .addCase(postNewData.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message;
+      })
+      // end  post
+
+      .addCase(updatePost.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        const index = state.posts.findIndex(
+          (post) => post.id === action.payload.id
         );
-        if (updatedIndex !== -1) {
-          state.list[updatedIndex] = action.payload;
+        if (index !== -1) {
+          state.posts[index] = action.payload;
         }
       })
-      .addCase(deleteTodo.fulfilled, (state, action) => {
-        state.list = state.list.filter((todo) => todo.id !== action.payload);
+      .addCase(deletePost.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.posts = state.posts.filter((post) => post.id !== action.payload);
       });
   },
 });
 
-// Export the actions and reducer
-export const { filterTodos } = todosSlice.actions;
-export default todosSlice.reducer;
+export default postSlice.reducer;
+export const { filterTodos } = postSlice.actions;

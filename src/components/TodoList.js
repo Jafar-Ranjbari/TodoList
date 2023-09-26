@@ -1,94 +1,48 @@
-// src/components/TodoList.js
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPosts, filterTodos } from "../redux/todosSlice";
+import Post from "./Post";
 
-import React, { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
-import {
-  fetchTodos,
-  filterTodos,
-  updateTodo,
-  deleteTodo,
-} from "./../redux/todosSlice";
-import {
-  Container,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-} from "@mui/material";
-import { Delete, Edit } from "@mui/icons-material";
-
-const TodoList = () => {
+const PostList = () => {
   const dispatch = useDispatch();
-  const { todos, filteredTodos, status, error } = useSelector(
-    (state) => state.todos
+  const { filteredTodos, status, error, posts } = useSelector(
+    (state) => state.posts
   );
 
-  console.log("first", todos);
-  useEffect(() => {
-    dispatch(fetchTodos());
-  }, [dispatch]);
+  const [Datashow, SetdataShow] = useState(true);
 
   const handleFilterChange = (e) => {
     dispatch(filterTodos(e.target.value));
+    SetdataShow(false);
   };
 
-  // const handleUpdateTodo = (todo) => {
-  //   dispatch(updateTodo({ ...todo, completed: !todo.completed }));
-  // };
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchPosts());
+    }
+  }, [dispatch, status]);
 
-  // const handleDeleteTodo = (id) => {
-  //   dispatch(deleteTodo(id));
-  // };
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (status === "failed") {
+    return <div>Error: {error}</div>;
+  }
 
   return (
-    <Container>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <input
         type="text"
         placeholder="Filter by title"
+        style={{ width: "30%", margin: "2%" }}
         onChange={handleFilterChange}
       />
-
-      <Link to="/Add">Add</Link>
-      {status === "loading" && <div>Loading...</div>}
-      {status === "failed" && <div>Error: {error}</div>}
-      <ul>
-        {filteredTodos.map((todo) => (
-          <li key={todo.id}>{todo.title}</li>
-        ))}
-      </ul>
-
-      <List>
-        {filteredTodos.map((todo) => (
-          <ListItem key={todo.id}>
-            <ListItemText
-              primary={todo.title}
-              // style={{
-              //   textDecoration: todo.completed ? "line-through" : "none",
-              // }}
-            />
-            {/* <ListItemSecondaryAction>
-              <IconButton
-                edge="end"
-                aria-label="Edit"
-                onClick={() => handleUpdateTodo(todo)}
-              >
-                <Edit />
-              </IconButton>
-              <IconButton
-                edge="end"
-                aria-label="Delete"
-                onClick={() => handleDeleteTodo(todo.id)}
-              >
-                <Delete />
-              </IconButton>
-            </ListItemSecondaryAction> */}
-          </ListItem>
-        ))}
-      </List>
-    </Container>
+      {Datashow
+        ? posts.map((post) => <Post key={post.id} post={post} />)
+        : filteredTodos.map((post) => <Post key={post.id} post={post} />)}
+    </div>
   );
 };
 
-export default TodoList;
+export default PostList;
